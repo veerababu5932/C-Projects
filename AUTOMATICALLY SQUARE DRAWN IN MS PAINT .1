@@ -1,0 +1,107 @@
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+// Function to simulate a mouse click (using SendInput)
+void LeftClick() {
+    INPUT input = {0};
+    input.type = INPUT_MOUSE;
+    input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+    SendInput(1, &input, sizeof(INPUT));
+
+    ZeroMemory(&input, sizeof(INPUT));
+    input.type = INPUT_MOUSE;
+    input.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+    SendInput(1, &input, sizeof(INPUT));
+    Sleep(100);
+}
+
+// Function to select the Pencil tool in MS Paint
+void selectPencilTool() {
+    // Adjust these coordinates based on your screen resolution
+    int pencilX = 50;   // X position of Pencil tool in MS Paint
+    int pencilY = 80;   // Y position of Pencil tool in MS Paint
+
+    // Move to Pencil tool and click
+    SetCursorPos(pencilX, pencilY);
+    LeftClick();
+    Sleep(500);
+}
+
+// Function to hold left mouse button and move
+void MoveWithLeftButtonDown(int x, int y) {
+    SetCursorPos(x, y);
+
+    INPUT input = {0};
+    input.type = INPUT_MOUSE;
+    input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+    input.mi.dx = x * (65535.0f / GetSystemMetrics(SM_CXSCREEN));
+    input.mi.dy = y * (65535.0f / GetSystemMetrics(SM_CYSCREEN));
+    SendInput(1, &input, sizeof(INPUT));
+    Sleep(1);
+}
+
+// Function to draw a square
+void drawSquare(int size) {
+    int startX = 500;  // Center X (adjust based on your screen)
+    int startY = 400;  // Center Y (adjust based on your screen)
+    int i;
+
+    // Move to starting position (without drawing)
+    SetCursorPos(startX, startY);
+    Sleep(100);
+
+    // Hold left mouse button to start drawing
+    INPUT input = {0};
+    input.type = INPUT_MOUSE;
+    input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+    SendInput(1, &input, sizeof(INPUT));
+    Sleep(50);
+
+    // Draw right side
+    for (i = 0; i <= size; i++) {
+        MoveWithLeftButtonDown(startX + i, startY);
+    }
+
+    // Draw down side
+    for (i = 0; i <= size; i++) {
+        MoveWithLeftButtonDown(startX + size, startY + i);
+    }
+
+    // Draw left side
+    for (i = 0; i <= size; i++) {
+        MoveWithLeftButtonDown(startX + size - i, startY + size);
+    }
+
+    // Draw up side (back to start)
+    for (i = 0; i <= size; i++) {
+        MoveWithLeftButtonDown(startX, startY + size - i);
+    }
+
+    // Release mouse button
+    ZeroMemory(&input, sizeof(INPUT));
+    input.type = INPUT_MOUSE;
+    input.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+    SendInput(1, &input, sizeof(INPUT));
+}
+
+int main() {
+    // Open MS Paint
+    system("start mspaint");
+    Sleep(3000); // Wait for Paint to open
+
+    // Maximize MS Paint window (optional)
+    HWND hwnd = FindWindowA(NULL, "Untitled - Paint");
+    if (hwnd) {
+        ShowWindow(hwnd, SW_MAXIMIZE);
+        Sleep(1000);
+    }
+
+    // Select Pencil tool
+    selectPencilTool();
+
+    // Draw a square of size 200 pixels
+    drawSquare(200);
+
+    return 0;
+}

@@ -1,0 +1,35 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <windows.h>
+
+int main()
+{
+    // Open Chrome with a specific URL (empty in this case)
+    system("start chrome about:blank");
+    
+    // Wait for Chrome to open (adjust delay if needed)
+    Sleep(3000);
+    
+    // Simulate typing "thub" and pressing Enter
+    // This uses Windows API to send keystrokes
+    keybd_event(VK_CONTROL, 0, 0, 0);          // Press Ctrl
+    keybd_event('L', 0, 0, 0);                 // Press L (focus address bar)
+    keybd_event('L', 0, KEYEVENTF_KEYUP, 0);   // Release L
+    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0); // Release Ctrl
+    
+    Sleep(100);  // Small delay
+    
+    // Type "thub"
+    const char* text = "thub";
+    for (int i = 0; text[i] != '\0'; i++) {
+        keybd_event(VkKeyScanA(text[i]), 0, 0, 0);
+        keybd_event(VkKeyScanA(text[i]), 0, KEYEVENTF_KEYUP, 0);
+        Sleep(50);
+    }
+    
+    // Press Enter
+    keybd_event(VK_RETURN, 0, 0, 0);
+    keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0);
+    
+    return 0;
+}

@@ -1,0 +1,138 @@
+#include <graphics.h>
+#include <conio.h>
+#include <dos.h>
+
+union REGS i, o;
+
+// Initialize mouse
+void init_mouse() {
+    i.x.ax = 0; // Reset mouse
+    int86(0x33, &i, &o);
+    if (o.x.ax == 0) {
+        printf("Mouse not installed!");
+        exit(1);
+    }
+    i.x.ax = 1; // Show mouse pointer
+    int86(0x33, &i, &o);
+}
+
+// Get mouse position and button status
+void get_mouse_pos(int *x, int *y, int *button) {
+    i.x.ax = 3; // Get mouse position and button status
+    int86(0x33, &i, &o);
+    *x = o.x.cx; // X-coordinate
+    *y = o.x.dx; // Y-coordinate
+    *button = o.x.bx; // Button status (left = 1, right = 2)
+}
+
+// Draw the car at specified position
+void draw_car(int x, int y) {
+    // Car body
+    setcolor(YELLOW);
+    rectangle(x, y, x + 100, y + 40);
+    setfillstyle(SOLID_FILL, YELLOW);
+    floodfill(x + 50, y + 20, YELLOW);
+    
+    // Cabin
+    setcolor(BLUE);
+    rectangle(x + 30, y - 20, x + 70, y);
+    setfillstyle(SOLID_FILL, BLUE);
+    floodfill(x + 50, y - 10, BLUE);
+    
+    // Wheels
+    setcolor(RED);
+    circle(x + 25, y + 40, 10);
+    circle(x + 75, y + 40, 10);
+    setfillstyle(SOLID_FILL, RED);
+    floodfill(x + 25, y + 40, RED);
+    floodfill(x + 75, y + 40, RED);
+    
+    // Flag
+    setcolor(GREEN);
+    rectangle(x + 70, y - 40, x + 80, y - 20);
+    setfillstyle(SOLID_FILL, GREEN);
+    floodfill(x + 75, y - 30, GREEN);
+}
+
+void main() {
+    int gd = DETECT, gm;
+    int car_x = 0, car_y = 400;
+    int max_x, x, y, button;
+    int is_moving = 1; // 1=moving, 0=stopped
+    int auto_stop_counter = 0;
+    int move_duration = 100; // 100 frames = 5 seconds (at 50ms/frame)
+    int stop_duration = 100; // 100 frames = 5 seconds
+    
+    initgraph(&gd, &gm, "C:\\TURBOC3\\BGI");
+    if (graphresult() != grOk) {
+        printf("Graphics initialization failed!");
+        exit(1);
+    }
+    
+    init_mouse();
+    max_x = getmaxx();
+    
+    setbkcolor(BLACK);
+    cleardevice();
+    setcolor(WHITE);
+    outtextxy(10, 10, "Controls: Right-click=Stop, Left-click=Move, Key=Exit");
+    outtextxy(10, 30, "Auto: Moves 5s, Stops 5s, then repeats");
+    
+    while (!kbhit()) {
+        get_mouse_pos(&x, &y, &button);
+        
+        // Manual control (overrides auto behavior)
+        if (button & 2) { // Right click - stop
+            is_moving = 0;
+            auto_stop_counter = 0; // Reset auto timer
+            while (button & 2) get_mouse_pos(&x, &y, &button);
+        }
+        if (button & 1) { // Left click - move
+            is_moving = 1;
+            auto_stop_counter = 0; // Reset auto timer
+            while (button & 1) get_mouse_pos(&x, &y, &button);
+        }
+        
+        // Automatic stop/resume logic
+        if (is_moving) {
+            auto_stop_counter++;
+            if (auto_stop_counter >= move_duration) {
+                is_moving = 0;
+                auto_stop_counter = 0;
+            }
+        } else {
+            auto_stop_counter++;
+            if (auto_stop_counter >= stop_duration) {
+                is_moving = 1;
+                auto_stop_counter = 0;
+            }
+        }
+        
+        // Clear and redraw
+        cleardevice();
+        outtextxy(10, 10, "Controls: Right-click=Stop, Left-click=Move, Key=Exit");
+        outtextxy(10, 30, "Auto: Moves 5s, Stops 5s, then repeats");
+        
+        // Display status
+        if (is_moving) {
+            outtextxy(10, 50, "Status: MOVING (auto)");
+        } else {
+            if (auto_stop_counter > 0) {
+                outtextxy(10, 50, "Status: AUTO-STOPPED");
+            } else {
+                outtextxy(10, 50, "Status: MANUALLY STOPPED");
+            }
+        }
+        
+        // Draw car and move if enabled
+        draw_car(car_x, car_y);
+        if (is_moving) {
+            car_x += 5;
+            if (car_x > max_x) car_x = -100;
+        }
+        
+        delay(50); // 50ms delay = 20 frames/second
+    }
+    
+    closegraph();
+}

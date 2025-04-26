@@ -1,0 +1,83 @@
+#include <windows.h>
+#include <stdio.h>
+#include <string.h>
+
+// Simulate typing
+void TypeString(const char *str, DWORD delay) {
+    const char *p;
+    for (p = str; *p; ++p) {
+        INPUT input[2] = {0};
+        input[0].type = INPUT_KEYBOARD;
+        input[0].ki.wVk = 0;
+        input[0].ki.wScan = *p;
+        input[0].ki.dwFlags = KEYEVENTF_UNICODE;
+
+        input[1] = input[0];
+        input[1].ki.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
+
+        SendInput(2, input, sizeof(INPUT));
+        Sleep(delay);
+    }
+}
+
+// Simulate key press
+void PressKey(WORD key, int hold) {
+    INPUT input[2] = {0};
+    input[0].type = INPUT_KEYBOARD;
+    input[0].ki.wVk = key;
+
+    input[1] = input[0];
+    input[1].ki.dwFlags = KEYEVENTF_KEYUP;
+
+    SendInput(2, input, sizeof(INPUT));
+    Sleep(hold);
+}
+
+// Move mouse to a position and click
+void MouseClickAt(int x, int y) {
+    SetCursorPos(x, y);
+    Sleep(500);
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    Sleep(100);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+}
+
+// Search and play video
+void SearchAndPlayYouTubeSong(const char *song) {
+    Sleep(5000);
+    HWND hwnd = FindWindow(NULL, "Chrome");
+    if (hwnd) SetForegroundWindow(hwnd);
+    else printf("Chrome window not found.\n");
+
+    TypeString("https://www.youtube.com", 100);
+    PressKey(VK_RETURN, 100);
+    Sleep(8000);
+
+    PressKey(0xBF, 100); // '/' for YouTube search bar
+    Sleep(1000);
+
+    TypeString(song, 50);
+    Sleep(1000);
+    PressKey(VK_RETURN, 100);
+    Sleep(8000);
+
+    // Move mouse to where the first video appears (adjust as needed)
+    printf("Clicking on the first video...\n");
+    MouseClickAt(400, 400);  // ?? adjust x, y if needed based on your screen
+    Sleep(3000);
+}
+
+int main() {
+    char song[100];
+    printf("Enter song name: ");
+    fgets(song, sizeof(song), stdin);
+    song[strcspn(song, "\n")] = 0;
+
+    system("start chrome");
+    Sleep(500);
+
+    SearchAndPlayYouTubeSong(song);
+
+    printf("Done! Song should be playing now.\n");
+    return 0;
+}

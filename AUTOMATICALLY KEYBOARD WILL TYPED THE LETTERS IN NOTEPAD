@@ -1,0 +1,84 @@
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+// Function to simulate key press with shift support
+void PressKey(char key, BOOL shiftNeeded) {
+    INPUT inputs[4] = {0};
+    int inputCount = 0;
+    
+    // Press Shift if needed
+    if (shiftNeeded) {
+        inputs[inputCount].type = INPUT_KEYBOARD;
+        inputs[inputCount].ki.wVk = VK_SHIFT;
+        inputCount++;
+    }
+    
+    // Press the key
+    inputs[inputCount].type = INPUT_KEYBOARD;
+    inputs[inputCount].ki.wVk = VkKeyScanA(key) & 0xFF;
+    inputCount++;
+    
+    // Release the key
+    inputs[inputCount].type = INPUT_KEYBOARD;
+    inputs[inputCount].ki.wVk = VkKeyScanA(key) & 0xFF;
+    inputs[inputCount].ki.dwFlags = KEYEVENTF_KEYUP;
+    inputCount++;
+    
+    // Release Shift if used
+    if (shiftNeeded) {
+        inputs[inputCount].type = INPUT_KEYBOARD;
+        inputs[inputCount].ki.wVk = VK_SHIFT;
+        inputs[inputCount].ki.dwFlags = KEYEVENTF_KEYUP;
+        inputCount++;
+    }
+    
+    SendInput(inputCount, inputs, sizeof(INPUT));
+    Sleep(30); // Short delay between key presses
+}
+
+// Function to type a complete string
+void TypeString(const char* text) {
+	int i;
+    for (i = 0; text[i] != '\0'; i++) {
+        // Determine if shift key is needed
+        BOOL shift = isupper(text[i]) || 
+                     strchr("!@#$%^&*()_+{}|:\"<>?", text[i]) != NULL;
+        
+        PressKey(tolower(text[i]), shift);
+        
+        // Longer delay after certain characters
+        if (text[i] == ' ' || text[i] == '.' || text[i] == ',' || text[i] == '\n') {
+            Sleep(50);
+        }
+    }
+}
+
+int main() {
+    // Open Notepad
+    system("start notepad");
+    Sleep(2000); // Wait for Notepad to open
+    
+    // Find Notepad window and bring to foreground
+    HWND hwnd = FindWindowA("Notepad", NULL);
+    if (hwnd) {
+        SetForegroundWindow(hwnd);
+        Sleep(500); // Wait for window to activate
+    }
+    
+    // Type some content
+    TypeString("This text is being typed automatically in Notepad!\n\n");
+    TypeString("Current Date: ");
+    
+    // Get and type current date (Windows specific)
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    char dateStr[50];
+    sprintf(dateStr, "%02d/%02d/%04d\n", st.wDay, st.wMonth, st.wYear);
+    TypeString(dateStr);
+    
+    TypeString("\nThis C program is simulating keyboard input.\n");
+    TypeString("It can type any text you want to automate!\n");
+    
+    return 0;
+}

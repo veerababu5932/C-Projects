@@ -1,0 +1,64 @@
+#include <graphics.h>
+#include <dos.h>
+#include <conio.h>
+#include <time.h>
+
+union REGS i, o;
+
+void init_mouse() {
+    i.x.ax = 0; // Reset mouse
+    int86(0x33, &i, &o);
+    if (o.x.ax == 0) {
+        printf("Mouse not installed!");
+        exit(1);
+    }
+    i.x.ax = 1; // Show mouse pointer
+    int86(0x33, &i, &o);
+}
+
+void get_mouse_pos(int *x, int *y, int *button) {
+    i.x.ax = 3; // Get mouse position and button status
+    int86(0x33, &i, &o);
+    *x = o.x.cx; // X-coordinate
+    *y = o.x.dx; // Y-coordinate
+    *button = o.x.bx; // Button status (not used for drawing)
+}
+
+void play_beep() {
+    sound(1000); // Play 1000 Hz sound
+    delay(200);  // Sound duration (200 ms)
+    nosound();   // Stop sound
+}
+
+void main() {
+    int gd = DETECT, gm;
+    int x, y, button;
+    clock_t last_draw_time = clock();
+    
+    initgraph(&gd, &gm, "C:\\TURBOC3\\BGI"); // Initialize graphics mode
+    if (graphresult() != grOk) {
+        printf("Graphics initialization failed!");
+        exit(1);
+    }
+    
+    init_mouse(); // Initialize mouse
+    
+    cleardevice();
+    setcolor(WHITE);
+    outtextxy(10, 10, "Move mouse to draw circles every 2 seconds with beep, press any key to exit");
+    
+    while (!kbhit()) { // Continue until a key is pressed
+        get_mouse_pos(&x, &y, &button); // Get current mouse position
+        
+        if ((clock() - last_draw_time) / CLK_TCK >= 2) { // 2 seconds elapsed
+            setcolor(YELLOW);
+            circle(x, y, 20); // Draw circle at current mouse pointer position
+            play_beep();      // Play beep sound
+            last_draw_time = clock(); // Reset timer
+        }
+        
+        delay(10); // Small delay to reduce CPU usage
+    }
+    
+    closegraph(); // Close graphics mode
+}

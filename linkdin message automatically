@@ -1,0 +1,63 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <windows.h>
+
+void simulateKeystrokes(const char* text) {
+	int i;
+    for ( i = 0; text[i] != '\0'; i++) {
+        keybd_event(VkKeyScanA(text[i]), 0, 0, 0);
+        keybd_event(VkKeyScanA(text[i]), 0, KEYEVENTF_KEYUP, 0);
+        Sleep(50);
+    }
+}
+
+void pressKey(BYTE key) {
+    keybd_event(key, 0, 0, 0);
+    keybd_event(key, 0, KEYEVENTF_KEYUP, 0);
+    Sleep(300);
+}
+
+int main() {
+	int i;
+    // 1. Open LinkedIn (assuming already logged in)
+    system("start chrome https://www.linkedin.com");
+    Sleep(5000); // Wait for page to load
+
+    // 2. Focus LinkedIn search bar (press '/')
+    pressKey(VkKeyScanA('/'));
+    Sleep(1000);
+
+    // 3. Search for user
+    simulateKeystrokes("SUDHARANI KANDA");
+    pressKey(VK_RETURN);
+    Sleep(3000);
+
+    // 4. Open first profile (Tab navigation)
+    for ( i = 0; i < 5; i++) {
+        pressKey(VK_TAB);
+    }
+    pressKey(VK_RETURN);
+    Sleep(3000);
+    
+    // 5. Like latest post
+    for (i = 0; i < 10; i++) {
+        pressKey(VK_TAB);
+    }
+    pressKey(VK_RETURN);
+    Sleep(2000);
+
+    // 6. Go to Messaging (shortcut: g then m)
+
+
+    // 7. Type and send message
+    simulateKeystrokes("hai mam");
+    pressKey(VK_RETURN);
+    for(i=0; i<=5; i++)
+    {
+    	pressKey(VK_TAB);
+    	
+	}
+	pressKey(VK_RETURN);
+
+    return 0;
+}

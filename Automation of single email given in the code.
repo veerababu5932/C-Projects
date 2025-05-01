@@ -1,0 +1,94 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <windows.h>
+
+// Improved typing function that handles special characters
+void typeText(const char *text) {
+	int i;
+    for(i = 0; text[i] != '\0'; i++) {
+        SHORT key = VkKeyScanA(text[i]);
+        BYTE vk = LOBYTE(key);
+        BYTE shiftState = HIBYTE(key);
+        
+        // Press Shift if needed
+        if(shiftState & 1) {
+            keybd_event(VK_SHIFT, 0, 0, 0);
+        }
+        
+        // Press the key
+        keybd_event(vk, 0, 0, 0);
+        keybd_event(vk, 0, KEYEVENTF_KEYUP, 0);
+        
+        // Release Shift if pressed
+        if(shiftState & 1) {
+            keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+        }
+        
+        Sleep(50); // Delay between keystrokes
+    }
+}
+
+void mouseClick(int x, int y) {
+    SetCursorPos(x, y);
+    Sleep(500);
+    mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    Sleep(100);
+    mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+}
+
+int main() {
+    printf("Starting Gmail automation...\n");
+    
+    // Open Gmail in Chrome
+    system("start chrome https://mail.google.com");
+    printf("Opened Gmail\n");
+    Sleep(10000); // Wait 10 seconds for login
+    
+    // Click on Compose button (adjust coordinates)
+    printf("Clicking Compose button...\n");
+    mouseClick(100, 200);
+    Sleep(2000);
+    
+    // Type recipient - now should handle @ symbol correctly
+    const char *recipient = "kadamatiarunasri@gmail.com";
+    printf("Entering recipient: %s\n", recipient);
+    typeText(recipient);
+    Sleep(1000);
+    
+    // Press Enter to confirm recipient
+    keybd_event(VK_RETURN, 0, 0, 0);
+    keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0);
+    Sleep(1000);
+    
+    // Tab to subject field
+    keybd_event(VK_TAB, 0, 0, 0);
+    keybd_event(VK_TAB, 0, KEYEVENTF_KEYUP, 0);
+    Sleep(500);
+    
+    // Type subject
+    const char *subject = "Automated Email from C Program";
+    printf("Entering subject: %s\n", subject);
+    typeText(subject);
+    Sleep(1000);
+    
+    // Tab to message body
+    keybd_event(VK_TAB, 0, 0, 0);
+    keybd_event(VK_TAB, 0, KEYEVENTF_KEYUP, 0);
+    Sleep(500);
+    
+    // Type message
+    const char *message = "Hello,\n\nThis email was sent automatically by a C program.\n\nBest regards,\nAutomation Bot";
+    printf("Entering message...\n");
+    typeText(message);
+    Sleep(1000);
+    
+    // Send the email (Ctrl+Enter)
+    printf("Sending email...\n");
+    keybd_event(VK_CONTROL, 0, 0, 0);
+    keybd_event(VK_RETURN, 0, 0, 0);
+    keybd_event(VK_RETURN, 0, KEYEVENTF_KEYUP, 0);
+    keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+    
+    printf("Email sent successfully!\n");
+    return 0;
+}
